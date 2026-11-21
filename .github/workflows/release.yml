@@ -1,0 +1,134 @@
+# Erstellt bei jedem Push auf "main" eine WordPress-taugliche Plugin-ZIP und hängt sie an ein Release.
+#
+# Logik:
+# - Die Version wird aus dem Plugin-Header (fm-wpcalendar.php, Zeile "Version:") gelesen.
+# - Neue Version  -> neues Release "vX.Y.Z" mit automatisch erzeugten Release-Notes.
+# - Gleiche Version -> bestehendes Release wird aktualisiert (Tag auf den neuen Commit, ZIP ersetzt).
+# - Die ZIP enthält den Ordner "fm-wpcalendar/" und kann direkt unter
+#   Plugins > Installieren > Plugin hochladen eingespielt werden.
+# - Dateien mit "export-ignore" in .gitattributes (README, .github, ...) landen nicht in der ZIP.
+
+name: Plugin-ZIP als Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+  workflow_dispatch: # Manuell startbar unter Actions > "Plugin-ZIP als Release" > Run workflow
+
+permissions:
+  contents: write # Für Tags und Releases
+
+# Nie zwei Release-Läufe gleichzeitig (sonst Konflikte beim Tag/Asset).
+concurrency:
+  group: plugin-release
+  cancel-in-progress: false
+
+env:
+  PLUGIN_SLUG: fm-wpcalendar
+  PLUGIN_FILE: fm-wpcalendar.php
+
+jobs:
+  release:
+    name: ZIP bauen und veröffentlichen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Komplette Historie für Release-Notes und Tags
+
+      - name: PHP 8.2 einrichten (Mindestversion des Plugins)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - name: PHP-Syntax prüfen
+        run: |
+          set -euo pipefail
+          php -v | head -n 1
+          # Jede PHP-Datei mit der Mindestversion prüfen; bricht beim ersten Fehler ab.
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Version aus dem Plugin-Header lesen
+        id: meta
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -m1 -E '^[[:space:]]*\*?[[:space:]]*Version:' "$PLUGIN_FILE" | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error file=$PLUGIN_FILE::Ungültige oder fehlende Version im Plugin-Header: '$VERSION'"
+            exit 1
+          fi
+
+          # Hinweise, falls Versionsangaben auseinanderlaufen (kein Abbruch).
+          CONST=$(grep -m1 -oE "define\( *'FMVT_VERSION', *'[^']+'" "$PLUGIN_FILE" | grep -oE "'[^']+'$" | tr -d "'" || true)
+          STABLE=$(grep -m1 -E '^Stable tag:' readme.txt | sed -E 's/Stable tag:[[:space:]]*//' | tr -d '[:space:]' || true)
+          [ "$CONST" = "$VERSION" ]  || echo "::warning file=$PLUGIN_FILE::FMVT_VERSION ($CONST) weicht von Version ($VERSION) ab."
+          [ "$STABLE" = "$VERSION" ] || echo "::warning file=readme.txt::Stable tag ($STABLE) weicht von Version ($VERSION) ab."
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=${PLUGIN_SLUG}-${VERSION}.zip" >> "$GITHUB_OUTPUT"
+          echo "Plugin-Version: $VERSION"
+
+      - name: ZIP bauen
+        run: |
+          set -euo pipefail
+          ZIP="${{ steps.meta.outputs.zip }}"
+          # git archive nutzt den committeten Stand und beachtet export-ignore aus .gitattributes.
+          git archive --format=zip --prefix="${PLUGIN_SLUG}/" -o "$ZIP" HEAD
+
+          # Prüfen, ob die Struktur für WordPress stimmt.
+          unzip -l "$ZIP"
+          unzip -l "$ZIP" | grep -q " ${PLUGIN_SLUG}/${PLUGIN_FILE}$" \
+            || { echo "::error::Hauptdatei ${PLUGIN_SLUG}/${PLUGIN_FILE} fehlt in der ZIP"; exit 1; }
+          if unzip -l "$ZIP" | grep -qE '/(\.git|\.github)/|README\.md$'; then
+            echo "::error::Entwicklungsdateien in der ZIP gefunden – .gitattributes prüfen"; exit 1
+          fi
+
+      - name: Release erstellen oder aktualisieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.meta.outputs.tag }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          ZIP="${{ steps.meta.outputs.zip }}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          BUILD_INFO="Build: \`${SHORT_SHA}\` vom $(TZ=Europe/Berlin date '+%d.%m.%Y %H:%M') Uhr"
+          INSTALL_HINT="**Installation:** \`${ZIP}\` herunterladen und in WordPress unter *Plugins → Installieren → Plugin hochladen* einspielen (bei bestehender Installation „Aktuelle durch hochgeladene Version ersetzen“ wählen)."
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG existiert – wird auf Commit $SHORT_SHA aktualisiert."
+            # Tag auf den aktuellen Commit verschieben, damit Tag und ZIP zusammenpassen.
+            git tag -f "$TAG" "$GITHUB_SHA"
+            git push -f origin "refs/tags/$TAG"
+            gh release upload "$TAG" "$ZIP" --clobber
+            gh release edit "$TAG" --title "FM-WPCalendar $VERSION" \
+              --notes "$(printf '%s\n\n%s\n\nLetzte Änderung: %s' "$INSTALL_HINT" "$BUILD_INFO" "$(git log -1 --pretty=%s)")"
+          else
+            echo "Neues Release $TAG wird erstellt."
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "refs/tags/$TAG"
+            gh release create "$TAG" "$ZIP" \
+              --title "FM-WPCalendar $VERSION" \
+              --notes "$(printf '%s\n\n%s' "$INSTALL_HINT" "$BUILD_INFO")" \
+              --generate-notes \
+              --latest
+          fi
+
+      - name: Zusammenfassung
+        run: |
+          {
+            echo "### FM-WPCalendar ${{ steps.meta.outputs.version }}"
+            echo ""
+            echo "ZIP: \`${{ steps.meta.outputs.zip }}\` → [Release ${{ steps.meta.outputs.tag }}](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }})"
+          } >> "$GITHUB_STEP_SUMMARY"

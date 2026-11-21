@@ -47,6 +47,14 @@ Alle Varianten funktionieren auch als `[fm_wpcalendar …]`.
 
 Unter **Termine → Import / Export**. Spalten: `titel`, `beschreibung`, `start_datum`, `end_datum`, `ganztaegig`, `start_zeit`, `end_zeit`, `ort`, `ort_adresse`. Trennzeichen und Zeichensatz werden automatisch erkannt; eine Vorlage lässt sich dort herunterladen.
 
+## Releases (automatisch)
+
+Bei jedem Push auf `main` baut GitHub Actions eine fertige Plugin-ZIP (`fm-wpcalendar-X.Y.Z.zip`) und hängt sie unter **Releases** an – direkt in WordPress hochladbar.
+
+- **Gleiche Version:** Das bestehende Release `vX.Y.Z` wird mit dem neuen Stand aktualisiert.
+- **Neue Version:** Version im Plugin-Header von `fm-wpcalendar.php` erhöhen (am besten auch `FMVT_VERSION` und `Stable tag` in `readme.txt`) – dann entsteht ein neues Release mit automatischen Release-Notes.
+- Manuell starten: *Actions → Plugin-ZIP als Release → Run workflow*.
+
 ## Anpassen
 
 Akzentfarbe per Zusatz-CSS:
