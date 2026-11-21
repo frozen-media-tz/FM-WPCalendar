@@ -1,0 +1,103 @@
+/* FM-WPCalendar – Backend */
+
+.fmvt-meta .fmvt-row {
+	display: grid;
+	grid-template-columns: 110px 1fr;
+	gap: 8px 16px;
+	align-items: start;
+	padding: 12px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.fmvt-meta .fmvt-row:last-child {
+	border-bottom: 0;
+}
+
+.fmvt-meta .fmvt-label {
+	font-weight: 600;
+	padding-top: 6px;
+}
+
+.fmvt-meta .fmvt-field {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 14px;
+	align-items: center;
+}
+
+.fmvt-meta .fmvt-check {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.fmvt-meta .fmvt-end-date-wrap,
+.fmvt-meta .fmvt-time-wrap {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.fmvt-meta [hidden] {
+	display: none !important;
+}
+
+.fmvt-meta .fmvt-new-location {
+	flex-basis: 100%;
+	max-width: 520px;
+	padding: 4px 12px;
+	background: #f6f7f7;
+	border-left: 3px solid #2271b1;
+}
+
+.fmvt-meta select {
+	min-width: 240px;
+}
+
+@media (max-width: 782px) {
+	.fmvt-meta .fmvt-row {
+		grid-template-columns: 1fr;
+	}
+}
+
+.column-fmvt_date {
+	width: 22%;
+}
+
+.column-fmvt_time {
+	width: 14%;
+}
+
+.fmvt-ie-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 20px;
+	max-width: 1100px;
+}
+
+.fmvt-ie-grid .card {
+	max-width: none;
+	margin-top: 10px;
+}
+
+.fmvt-ie fieldset {
+	margin: 12px 0;
+}
+
+.fmvt-help {
+	max-width: 1100px;
+}
+
+.fmvt-errors {
+	list-style: disc;
+	margin-left: 20px;
+}
+
+.fmvt-after-title {
+	margin-top: 20px;
+}
+
+.fmvt-after-title .postbox {
+	margin-bottom: 0;
+}
