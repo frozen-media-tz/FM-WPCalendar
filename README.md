@@ -57,11 +57,17 @@ Bei jedem Push auf `main` baut GitHub Actions eine fertige Plugin-ZIP (`fm-wpcal
 
 ## Anpassen
 
-Akzentfarbe per Zusatz-CSS:
+Schriftart: unter **Termine → Einstellungen → Schriftart** (leer = Schrift des Themes) oder per Zusatz-CSS. Akzentfarbe per Zusatz-CSS:
 
 ```css
-.fmvt { --fmvt-accent: #b91c1c; }
+.fmvt {
+	--fmvt-accent: #b91c1c;              /* Akzentfarbe */
+	--fmvt-font: "Open Sans", sans-serif; /* Schriftart */
+	--fmvt-badge-width: 6rem;             /* Breite des Datumskastens in der Liste */
+}
 ```
+
+**Hinweis:** Den Shortcode im Editor als normalen Text einfügen, nicht als Code formatieren.
 
 ## Lizenz
 

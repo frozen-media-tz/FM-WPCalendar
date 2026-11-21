@@ -101,3 +101,12 @@
 .fmvt-after-title .postbox {
 	margin-bottom: 0;
 }
+
+.fmvt-help .fmvt-sc {
+	width: 100%;
+	max-width: none;
+	min-width: 420px;
+	font-family: Consolas, Monaco, monospace;
+	background: #f6f7f7;
+	cursor: copy;
+}

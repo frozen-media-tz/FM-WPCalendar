@@ -3,6 +3,9 @@
  *
  * Farben lassen sich im Theme (Customizer > Zusätzliches CSS) anpassen, z. B.:
  * .fmvt { --fmvt-accent: #b91c1c; }
+ *
+ * Schriftart (alternativ unter Termine > Einstellungen):
+ * .fmvt { --fmvt-font: "Open Sans", sans-serif; }
  */
 
 .fmvt {
@@ -12,8 +15,27 @@
 	--fmvt-muted: color-mix(in srgb, currentColor 62%, transparent);
 	--fmvt-soft: color-mix(in srgb, var(--fmvt-accent) 8%, transparent);
 	--fmvt-radius: 10px;
+	--fmvt-badge-width: 5.75rem;
 	box-sizing: border-box;
 	margin-block: 1.5em;
+	font-family: var(--fmvt-font, inherit);
+}
+
+/* Buttons übernehmen die Schrift sonst nicht automatisch. */
+.fmvt button,
+.fmvt-more {
+	font-family: var(--fmvt-font, inherit);
+}
+
+/*
+ * Schutz: Wurde der Shortcode im Editor als Code formatiert, verschachtelt der Browser
+ * die Ausgabe in <code>. Dieses Element wird hier neutralisiert (Schrift, Hintergrund, Abstände).
+ */
+.fmvt-list-wrap code,
+.fmvt-month code,
+.fmvt-compact code {
+	all: unset;
+	display: contents;
 }
 
 .fmvt *,
@@ -78,7 +100,7 @@
 
 .fmvt-item {
 	display: grid;
-	grid-template-columns: 4.2rem 1fr;
+	grid-template-columns: var(--fmvt-badge-width) 1fr;
 	gap: 1rem;
 	align-items: center;
 	margin: 0;
@@ -104,7 +126,10 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	min-width: 0;
 	min-height: 4rem;
+	padding: 0.35rem 0.25rem;
+	overflow: hidden;
 	border-radius: 8px;
 	background: var(--fmvt-soft);
 	color: var(--fmvt-accent);
@@ -128,6 +153,18 @@
 	font-weight: 600;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/* Mehrtägig (z. B. "30.–31."): kleinere Schrift, damit es in den Kasten passt */
+.fmvt-badge.is-range .fmvt-badge-day {
+	font-size: 1.05rem;
+	letter-spacing: -0.02em;
+}
+
+.fmvt-badge.is-range .fmvt-badge-month {
+	font-size: 0.68rem;
+	letter-spacing: 0.02em;
 }
 
 .fmvt-item-main {
@@ -193,8 +230,12 @@
 }
 
 @media (max-width: 480px) {
+	.fmvt {
+		--fmvt-badge-width: 4.75rem;
+	}
+
 	.fmvt-item {
-		grid-template-columns: 3.4rem 1fr;
+		grid-template-columns: var(--fmvt-badge-width) 1fr;
 		gap: 0.75rem;
 		padding: 0.75rem;
 	}
@@ -205,6 +246,14 @@
 
 	.fmvt-badge-day {
 		font-size: 1.1rem;
+	}
+
+	.fmvt-badge.is-range .fmvt-badge-day {
+		font-size: 0.9rem;
+	}
+
+	.fmvt-badge.is-range .fmvt-badge-month {
+		font-size: 0.6rem;
 	}
 }
 

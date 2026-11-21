@@ -4,7 +4,7 @@ Tags: termine, kalender, verein, events, veranstaltungen
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,12 @@ Alle Shortcodes funktionieren auch als `[fm_wpcalendar …]` mit denselben Attri
 5. Unter Design > Widgets das Widget „Nächste Termine“ in die Seitenleiste ziehen.
 
 == Changelog ==
+
+= 1.0.1 =
+* Mehrtägige Termine: Datumskasten in der Liste verbreitert, Zeiträume über den Monatswechsel (z. B. „30.–2.“ / „Jan.–Feb.“) werden vollständig angezeigt.
+* Neue Einstellung „Schriftart“ (leer = Schrift des Themes), alternativ per CSS-Variable --fmvt-font.
+* Shortcode, der im Editor versehentlich als Code formatiert wurde, wird automatisch bereinigt (keine Code-Schrift mehr in der Ausgabe).
+* Shortcodes in den Einstellungen als kopierbare Textfelder.
 
 = 1.0.0 =
 * Erste Version.

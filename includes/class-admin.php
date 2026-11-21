@@ -442,8 +442,13 @@ final class Admin {
 		if ( $page > 0 && 'page' !== get_post_type( $page ) ) {
 			$page = 0;
 		}
+		$font = isset( $input['font_family'] ) ? Frontend::sanitize_font( (string) $input['font_family'] ) : '';
+		if ( isset( $input['font_family'] ) && '' !== trim( (string) $input['font_family'] ) && '' === $font ) {
+			add_settings_error( Plugin::OPTION, 'fmvt_font', __( 'Die Schriftart enthält unzulässige Zeichen und wurde nicht übernommen.', 'fm-wpcalendar' ) );
+		}
 		return array(
 			'calendar_page'    => $page,
+			'font_family'      => $font,
 			'delete_uninstall' => ! empty( $input['delete_uninstall'] ),
 		);
 	}
@@ -454,9 +459,11 @@ final class Admin {
 		}
 		$page   = (int) Plugin::setting( 'calendar_page', 0 );
 		$delete = (bool) Plugin::setting( 'delete_uninstall', false );
+		$font   = (string) Plugin::setting( 'font_family', '' );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Termine – Einstellungen', 'fm-wpcalendar' ); ?></h1>
+			<?php settings_errors( Plugin::OPTION ); ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'fmvt_settings_group' ); ?>
 				<table class="form-table" role="presentation">
@@ -478,6 +485,15 @@ final class Admin {
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="fmvt-font"><?php esc_html_e( 'Schriftart', 'fm-wpcalendar' ); ?></label></th>
+						<td>
+							<input type="text" id="fmvt-font" class="regular-text" name="<?php echo esc_attr( Plugin::OPTION ); ?>[font_family]" value="<?php echo esc_attr( $font ); ?>" placeholder="<?php esc_attr_e( 'leer = Schrift des Themes', 'fm-wpcalendar' ); ?>" maxlength="200">
+							<p class="description">
+								<?php esc_html_e( 'Optional. Leer lassen, um die Schrift des Themes zu übernehmen. Sonst wie in CSS angeben, z. B. "Open Sans", sans-serif – die Schrift muss vom Theme bereits geladen sein.', 'fm-wpcalendar' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Deinstallation', 'fm-wpcalendar' ); ?></th>
 						<td>
 							<label>
@@ -491,12 +507,13 @@ final class Admin {
 			</form>
 
 			<h2><?php esc_html_e( 'Shortcodes', 'fm-wpcalendar' ); ?></h2>
+			<p><?php esc_html_e( 'Zum Kopieren in das Feld klicken. Im Editor am besten als normalen Text bzw. in einen Shortcode-Block einfügen, nicht als Code formatieren.', 'fm-wpcalendar' ); ?></p>
 			<table class="widefat striped fmvt-help">
 				<tbody>
-					<tr><td><code>[vereinstermine]</code></td><td><?php esc_html_e( 'Terminliste, 10 Einträge, „Mehr anzeigen“ lädt weitere nach', 'fm-wpcalendar' ); ?></td></tr>
-					<tr><td><code>[vereinstermine ansicht="liste" anzahl="5"]</code></td><td><?php esc_html_e( 'Terminliste mit 5 Einträgen je Ladevorgang', 'fm-wpcalendar' ); ?></td></tr>
-					<tr><td><code>[vereinstermine ansicht="monat"]</code></td><td><?php esc_html_e( 'Monatskalender, startet im aktuellen Monat, vor- und zurückblätterbar', 'fm-wpcalendar' ); ?></td></tr>
-					<tr><td><code>[vereinstermine ansicht="kompakt" anzahl="5"]</code></td><td><?php esc_html_e( 'Kompakte Liste (wie das Widget), z. B. für Seitenleisten im Block-Editor', 'fm-wpcalendar' ); ?></td></tr>
+					<tr><td><input type="text" class="fmvt-sc" readonly value="<?php echo esc_attr( '[vereinstermine]' ); ?>" onfocus="this.select()"></td><td><?php esc_html_e( 'Terminliste, 10 Einträge, „Mehr anzeigen“ lädt weitere nach', 'fm-wpcalendar' ); ?></td></tr>
+					<tr><td><input type="text" class="fmvt-sc" readonly value="<?php echo esc_attr( '[vereinstermine ansicht="liste" anzahl="5"]' ); ?>" onfocus="this.select()"></td><td><?php esc_html_e( 'Terminliste mit 5 Einträgen je Ladevorgang', 'fm-wpcalendar' ); ?></td></tr>
+					<tr><td><input type="text" class="fmvt-sc" readonly value="<?php echo esc_attr( '[vereinstermine ansicht="monat"]' ); ?>" onfocus="this.select()"></td><td><?php esc_html_e( 'Monatskalender, startet im aktuellen Monat, vor- und zurückblätterbar', 'fm-wpcalendar' ); ?></td></tr>
+					<tr><td><input type="text" class="fmvt-sc" readonly value="<?php echo esc_attr( '[vereinstermine ansicht="kompakt" anzahl="5"]' ); ?>" onfocus="this.select()"></td><td><?php esc_html_e( 'Kompakte Liste (wie das Widget), z. B. für Seitenleisten im Block-Editor', 'fm-wpcalendar' ); ?></td></tr>
 				</tbody>
 			</table>
 			<p class="description"><?php esc_html_e( 'Statt [vereinstermine] kann auch [fm_wpcalendar] mit denselben Attributen verwendet werden.', 'fm-wpcalendar' ); ?></p>

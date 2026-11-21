@@ -39,6 +39,10 @@ final class Frontend {
 			add_action( 'wp_ajax_nopriv_' . $action, array( $this, 'ajax_' . substr( $action, 5 ) ) );
 		}
 
+		// Versehentliche Code-Formatierung um den Shortcode entfernen (vor wpautop und do_shortcode).
+		add_filter( 'the_content', array( $this, 'unwrap_code_formatting' ), 8 );
+		add_filter( 'widget_text_content', array( $this, 'unwrap_code_formatting' ), 8 );
+
 		// Detailseite.
 		add_filter( 'the_content', array( $this, 'detail_content' ), 20 );
 		add_filter( 'body_class', array( $this, 'body_class' ) );
@@ -49,6 +53,14 @@ final class Frontend {
 	 * ------------------------------------------------------------------- */
 
 	public function register_assets(): void {
+		// Nur einmal registrieren: Block-Themes rendern Inhalte (und damit Shortcodes) schon vor wp_head.
+		if ( wp_style_is( 'fmvt-frontend', 'registered' ) ) {
+			if ( is_singular( Post_Type::POST_TYPE ) ) {
+				self::enqueue();
+			}
+			return;
+		}
+
 		wp_register_style( 'fmvt-frontend', FMVT_URL . 'assets/css/frontend.css', array(), FMVT_VERSION );
 		wp_register_script( 'fmvt-frontend', FMVT_URL . 'assets/js/frontend.js', array(), FMVT_VERSION, array( 'in_footer' => true, 'strategy' => 'defer' ) );
 		wp_add_inline_script(
@@ -65,6 +77,13 @@ final class Frontend {
 			'before'
 		);
 
+		// Eigene Schriftart aus den Einstellungen (leer = Schrift des Themes).
+		$font = self::sanitize_font( (string) Plugin::setting( 'font_family', '' ) );
+		if ( '' !== $font ) {
+			// Auch die Monatsüberschrift umstellen (Themes setzen für h3 oft eine eigene Schrift).
+			wp_add_inline_style( 'fmvt-frontend', '.fmvt{--fmvt-font:' . $font . ';}.fmvt h3{font-family:' . $font . ';}' );
+		}
+
 		// Auf der Detailseite Styles direkt im Kopf laden.
 		if ( is_singular( Post_Type::POST_TYPE ) ) {
 			self::enqueue();
@@ -80,6 +99,37 @@ final class Frontend {
 		}
 		wp_enqueue_style( 'fmvt-frontend' );
 		wp_enqueue_script( 'fmvt-frontend' );
+	}
+
+	/**
+	 * Bereinigt eine CSS-font-family-Angabe (nur Buchstaben, Ziffern, Leerzeichen, Komma, Bindestrich, Anführungszeichen).
+	 */
+	public static function sanitize_font( string $font ): string {
+		$font = trim( wp_strip_all_tags( $font ) );
+		if ( '' === $font || mb_strlen( $font ) > 200 || 1 !== preg_match( '/^[\p{L}0-9 ,\-_"\']+$/u', $font ) ) {
+			return '';
+		}
+		// Anführungszeichen müssen paarweise vorkommen, sonst wäre das CSS kaputt.
+		if ( 0 !== substr_count( $font, '"' ) % 2 || 0 !== substr_count( $font, "'" ) % 2 ) {
+			return '';
+		}
+		return $font;
+	}
+
+	/**
+	 * Entfernt <code>/<pre>/<kbd>, die versehentlich um den Shortcode gesetzt wurden
+	 * (z. B. beim Kopieren aus der Hilfe). Sonst übernimmt die ganze Ausgabe die Code-Schrift.
+	 */
+	public function unwrap_code_formatting( mixed $content ): mixed {
+		if ( ! is_string( $content ) || ! str_contains( $content, '[' ) ) {
+			return $content;
+		}
+		$tags = preg_quote( self::SHORTCODE, '#' ) . '|' . preg_quote( self::SHORTCODE_ALIAS, '#' );
+		return (string) preg_replace(
+			'#<(code|pre|kbd)(?:\s[^>]*)?>\s*(\[(?:' . $tags . ')\b[^\]]*\])\s*</\1>#i',
+			'$2',
+			$content
+		);
 	}
 
 	/* ---------------------------------------------------------------------
@@ -305,11 +355,14 @@ final class Frontend {
 
 			$badge_day   = Event::format_date( $event->start_date, 'j' );
 			$badge_month = Event::format_date( $event->start_date, 'M' );
+			$badge_class = 'fmvt-badge';
 			if ( $event->is_multi_day() ) {
-				$same_month = substr( $event->start_date, 0, 7 ) === substr( $event->end_date, 0, 7 );
-				$badge_day  = $same_month
-					? $badge_day . '.–' . Event::format_date( $event->end_date, 'j' ) . '.'
-					: $badge_day . '.–';
+				$badge_class .= ' is-range';
+				$badge_day    = $badge_day . '.–' . Event::format_date( $event->end_date, 'j' ) . '.';
+				// Über den Monatswechsel: beide Monate anzeigen, z. B. "30.–2." / "Jan.–Feb.".
+				if ( substr( $event->start_date, 0, 7 ) !== substr( $event->end_date, 0, 7 ) ) {
+					$badge_month .= '–' . Event::format_date( $event->end_date, 'M' );
+				}
 			}
 
 			$label = '';
@@ -320,7 +373,7 @@ final class Frontend {
 			}
 
 			$html .= '<li class="' . esc_attr( $classes ) . '">';
-			$html .= '<div class="fmvt-badge" aria-hidden="true"><span class="fmvt-badge-day">' . esc_html( $badge_day ) . '</span><span class="fmvt-badge-month">' . esc_html( $badge_month ) . '</span></div>';
+			$html .= '<div class="' . esc_attr( $badge_class ) . '" aria-hidden="true"><span class="fmvt-badge-day">' . esc_html( $badge_day ) . '</span><span class="fmvt-badge-month">' . esc_html( $badge_month ) . '</span></div>';
 			$html .= '<div class="fmvt-item-main">';
 			if ( '' !== $label ) {
 				$html .= '<span class="fmvt-label">' . esc_html( $label ) . '</span>';

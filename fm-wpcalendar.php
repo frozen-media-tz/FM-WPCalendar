@@ -3,7 +3,7 @@
  * Plugin Name:       FM-WPCalendar
  * Plugin URI:        https://www.frozen-media.de
  * Description:       Einfache Terminverwaltung für Vereine: Termine mit Datum, Uhrzeit, Ort und Beschreibung. Monatskalender und Terminliste per Shortcode, Sidebar-Widget sowie CSV-/Excel-Import und -Export.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.4
  * Requires PHP:      8.2
  * Author:            Frozen-Media
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin-Konstanten.
-define( 'FMVT_VERSION', '1.0.0' );
+define( 'FMVT_VERSION', '1.0.1' );
 define( 'FMVT_FILE', __FILE__ );
 define( 'FMVT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FMVT_URL', plugin_dir_url( __FILE__ ) );
