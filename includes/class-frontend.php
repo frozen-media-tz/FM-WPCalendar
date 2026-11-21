@@ -55,7 +55,7 @@ final class Frontend {
 	public function register_assets(): void {
 		// Nur einmal registrieren: Block-Themes rendern Inhalte (und damit Shortcodes) schon vor wp_head.
 		if ( wp_style_is( 'fmvt-frontend', 'registered' ) ) {
-			if ( is_singular( Post_Type::POST_TYPE ) ) {
+			if ( did_action( 'wp_enqueue_scripts' ) && self::page_needs_assets() ) {
 				self::enqueue();
 			}
 			return;
@@ -77,17 +77,48 @@ final class Frontend {
 			'before'
 		);
 
-		// Eigene Schriftart aus den Einstellungen (leer = Schrift des Themes).
+		// Akzentfarbe und Schriftart aus den Einstellungen (leer = Standard bzw. Theme).
+		// "body .fmvt" ist spezifischer als ".fmvt": die Einstellung hat damit Vorrang vor Theme-CSS.
+		$inline = '';
+		$accent = sanitize_hex_color( (string) Plugin::setting( 'accent_color', '' ) );
+		if ( is_string( $accent ) && '' !== $accent ) {
+			$inline .= 'body .fmvt{--fmvt-accent:' . $accent . ';}';
+		}
 		$font = self::sanitize_font( (string) Plugin::setting( 'font_family', '' ) );
 		if ( '' !== $font ) {
 			// Auch die Monatsüberschrift umstellen (Themes setzen für h3 oft eine eigene Schrift).
-			wp_add_inline_style( 'fmvt-frontend', '.fmvt{--fmvt-font:' . $font . ';}.fmvt h3{font-family:' . $font . ';}' );
+			$inline .= 'body .fmvt{--fmvt-font:' . $font . ';}body .fmvt h3{font-family:' . $font . ';}';
+		}
+		if ( '' !== $inline ) {
+			wp_add_inline_style( 'fmvt-frontend', $inline );
 		}
 
-		// Auf der Detailseite Styles direkt im Kopf laden.
-		if ( is_singular( Post_Type::POST_TYPE ) ) {
+		// Styles möglichst schon im <head> laden (kein kurzes Aufblitzen ohne Gestaltung).
+		if ( self::page_needs_assets() ) {
 			self::enqueue();
 		}
+	}
+
+	/**
+	 * Prüft vorab, ob die aktuelle Seite Termine anzeigt (Detailseite, Shortcode im Inhalt oder aktives Widget).
+	 * Fälle, die hier nicht erkannt werden (z. B. Shortcode in einem Page-Builder-Template), laden die
+	 * Styles weiterhin beim Rendern nach.
+	 */
+	private static function page_needs_assets(): bool {
+		if ( is_singular( Post_Type::POST_TYPE ) ) {
+			return true;
+		}
+		if ( is_active_widget( false, false, 'fmvt_upcoming', true ) ) {
+			return true;
+		}
+		if ( is_singular() ) {
+			$post = get_queried_object();
+			if ( $post instanceof \WP_Post
+				&& ( has_shortcode( $post->post_content, self::SHORTCODE ) || has_shortcode( $post->post_content, self::SHORTCODE_ALIAS ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

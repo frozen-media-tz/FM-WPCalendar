@@ -1,14 +1,18 @@
 /*
  * FM-WPCalendar – Frontend
  *
- * Farben lassen sich im Theme (Customizer > Zusätzliches CSS) anpassen, z. B.:
- * .fmvt { --fmvt-accent: #b91c1c; }
+ * Anpassung im Theme (Customizer > Zusätzliches CSS oder style.css des Child-Themes), z. B.:
+ * .fmvt {
+ *     --fmvt-accent: #b91c1c;               Akzentfarbe
+ *     --fmvt-font: "Open Sans", sans-serif;  Schriftart
+ * }
+ * Akzentfarbe und Schriftart gehen alternativ unter Termine > Einstellungen.
  *
- * Schriftart (alternativ unter Termine > Einstellungen):
- * .fmvt { --fmvt-font: "Open Sans", sans-serif; }
+ * Die Standardwerte stehen in :where(.fmvt) und haben damit die Spezifität 0 –
+ * eigene .fmvt-Regeln gewinnen immer, egal in welcher Reihenfolge die CSS-Dateien laden.
  */
 
-.fmvt {
+:where(.fmvt) {
 	--fmvt-accent: var(--wp--preset--color--primary, var(--wp--preset--color--vivid-cyan-blue, #1f5fa8));
 	--fmvt-accent-text: #fff;
 	--fmvt-border: color-mix(in srgb, currentColor 14%, transparent);
@@ -16,6 +20,9 @@
 	--fmvt-soft: color-mix(in srgb, var(--fmvt-accent) 8%, transparent);
 	--fmvt-radius: 10px;
 	--fmvt-badge-width: 5.75rem;
+}
+
+.fmvt {
 	box-sizing: border-box;
 	margin-block: 1.5em;
 	font-family: var(--fmvt-font, inherit);
@@ -230,7 +237,7 @@
 }
 
 @media (max-width: 480px) {
-	.fmvt {
+	:where(.fmvt) {
 		--fmvt-badge-width: 4.75rem;
 	}
 

@@ -4,7 +4,7 @@ Tags: termine, kalender, verein, events, veranstaltungen
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 8.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,6 +47,11 @@ Alle Shortcodes funktionieren auch als `[fm_wpcalendar …]` mit denselben Attri
 5. Unter Design > Widgets das Widget „Nächste Termine“ in die Seitenleiste ziehen.
 
 == Changelog ==
+
+= 1.0.2 =
+* Eigene CSS-Variablen (z. B. .fmvt { --fmvt-accent: … }) greifen jetzt überall – unabhängig davon, ob das Theme-CSS vor oder nach dem Plugin geladen wird.
+* Neue Einstellung „Akzentfarbe“ mit Farbwähler (hat Vorrang vor CSS).
+* Styles werden auf Seiten mit Shortcode oder Widget bereits im <head> geladen.
 
 = 1.0.1 =
 * Mehrtägige Termine: Datumskasten in der Liste verbreitert, Zeiträume über den Monatswechsel (z. B. „30.–2.“ / „Jan.–Feb.“) werden vollständig angezeigt.

@@ -244,6 +244,13 @@ final class Admin {
 	 * Admin-Skripte nur auf den Plugin-Seiten laden.
 	 */
 	public function enqueue( string $hook ): void {
+		// Farbwähler (in WordPress enthalten) auf der Einstellungsseite.
+		if ( str_ends_with( $hook, '_page_fmvt-settings' ) ) {
+			wp_enqueue_style( 'wp-color-picker' );
+			wp_enqueue_script( 'wp-color-picker' );
+			wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){$(".fmvt-color").wpColorPicker();});' );
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen || Post_Type::POST_TYPE !== $screen->post_type ) {
 			return;
@@ -442,12 +449,17 @@ final class Admin {
 		if ( $page > 0 && 'page' !== get_post_type( $page ) ) {
 			$page = 0;
 		}
+		$accent = isset( $input['accent_color'] ) ? sanitize_hex_color( trim( (string) $input['accent_color'] ) ) : '';
+		if ( isset( $input['accent_color'] ) && '' !== trim( (string) $input['accent_color'] ) && ! $accent ) {
+			add_settings_error( Plugin::OPTION, 'fmvt_accent', __( 'Die Akzentfarbe muss als Hex-Wert angegeben werden (z. B. #960909) und wurde nicht übernommen.', 'fm-wpcalendar' ) );
+		}
 		$font = isset( $input['font_family'] ) ? Frontend::sanitize_font( (string) $input['font_family'] ) : '';
 		if ( isset( $input['font_family'] ) && '' !== trim( (string) $input['font_family'] ) && '' === $font ) {
 			add_settings_error( Plugin::OPTION, 'fmvt_font', __( 'Die Schriftart enthält unzulässige Zeichen und wurde nicht übernommen.', 'fm-wpcalendar' ) );
 		}
 		return array(
 			'calendar_page'    => $page,
+			'accent_color'     => is_string( $accent ) ? $accent : '',
 			'font_family'      => $font,
 			'delete_uninstall' => ! empty( $input['delete_uninstall'] ),
 		);
@@ -460,6 +472,7 @@ final class Admin {
 		$page   = (int) Plugin::setting( 'calendar_page', 0 );
 		$delete = (bool) Plugin::setting( 'delete_uninstall', false );
 		$font   = (string) Plugin::setting( 'font_family', '' );
+		$accent = (string) Plugin::setting( 'accent_color', '' );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Termine – Einstellungen', 'fm-wpcalendar' ); ?></h1>
@@ -482,6 +495,13 @@ final class Admin {
 							);
 							?>
 							<p class="description"><?php esc_html_e( 'Seite mit dem Termin-Shortcode. Der „Zurück“-Link auf der Detailseite führt hierhin, wenn der Besucher nicht von einer Seite dieser Website kommt. Außerdem verlinkt das Widget auf „Alle Termine“.', 'fm-wpcalendar' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="fmvt-accent"><?php esc_html_e( 'Akzentfarbe', 'fm-wpcalendar' ); ?></label></th>
+						<td>
+							<input type="text" id="fmvt-accent" class="fmvt-color" name="<?php echo esc_attr( Plugin::OPTION ); ?>[accent_color]" value="<?php echo esc_attr( $accent ); ?>" maxlength="7" placeholder="#960909">
+							<p class="description"><?php esc_html_e( 'Optional. Hat Vorrang vor einer per CSS gesetzten Farbe. Leer lassen, um die Standardfarbe bzw. die CSS-Angabe (--fmvt-accent) zu verwenden.', 'fm-wpcalendar' ); ?></p>
 						</td>
 					</tr>
 					<tr>
