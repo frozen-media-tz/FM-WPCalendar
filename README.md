@@ -14,16 +14,13 @@ Einfache Terminverwaltung für Vereine als WordPress-Plugin – von [Frozen-Medi
 
 ## Installation
 
-**Per ZIP:** Unter *Code → Download ZIP* herunterladen, den enthaltenen Ordner in `fm-wpcalendar` umbenennen, wieder zippen und unter *Plugins → Installieren → Plugin hochladen* einspielen.
+1. Unter [**Releases → Latest**](https://github.com/frozen-media-tz/FM-WPCalendar/releases/latest) die Datei `fm-wpcalendar-X.Y.Z.zip` herunterladen.
+2. In WordPress unter *Plugins → Installieren → Plugin hochladen* die ZIP auswählen und installieren.
+3. Plugin aktivieren.
 
-**Per Git (auf dem Server):**
+**Update:** Neue Release-ZIP genauso hochladen und *„Aktuelle durch hochgeladene Version ersetzen“* wählen – Termine und Einstellungen bleiben erhalten.
 
-```bash
-cd wp-content/plugins
-git clone https://github.com/frozen-media-tz/FM-WPCalendar.git fm-wpcalendar
-```
-
-Danach das Plugin aktivieren.
+> Bitte nicht *Code → Download ZIP* verwenden: Diese ZIP enthält den Ordner `FM-WPCalendar-main` und Entwicklungsdateien. Die Release-ZIP ist bereits fertig für WordPress.
 
 ## Einrichtung
 
